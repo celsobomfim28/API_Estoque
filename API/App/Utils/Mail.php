@@ -5,15 +5,20 @@ namespace App\Utils;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
+use \App\Utils\Encrypt;
 
 //Load Composer's autoloader
-define('__ROOT__', dirname(dirname(__FILE__))); 
+define('__ROOT__', dirname(dirname(__FILE__)));
+include_once(__ROOT__.'/App/Utils/Encrypt.php'); 
+include_once(__ROOT__.'/config.php'); 
 require (__ROOT__.'/vendor/autoload.php');
 
 
 class Mail{
 
 public function sendEmail($email, $nome, $token){
+
+    $encrypt = new Encrypt();
         //Create an instance; passing `true` enables exceptions
 $mail = new PHPMailer(true);
 
@@ -21,10 +26,10 @@ try {
     //Server settings
     $mail->SMTPDebug = SMTP::DEBUG_SERVER;                      //Enable verbose debug output
     $mail->isSMTP();                                            //Send using SMTP
-    $mail->Host       = 'smtp-mail.outlook.com';                     //Set the SMTP server to send through
+    $mail->Host       = base64url_decode($HOST);                     //Set the SMTP server to send through
     $mail->SMTPAuth   = true;                                   //Enable SMTP authentication
-    $mail->Username   = 'celsobomfim20@hotmail.com';                     //SMTP username
-    $mail->Password   = 'celsobomfim16051';                               //SMTP password
+    $mail->Username   = base64url_decode($USER);                      //SMTP username
+    $mail->Password   = base64url_decode($PASS);                              //SMTP password
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;            //Enable implicit TLS encryption
     $mail->Port       = 587;                                    //TCP port to connect to; use 587 if you have set `SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS`
 
