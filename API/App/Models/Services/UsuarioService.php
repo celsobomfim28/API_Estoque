@@ -1,6 +1,7 @@
 <?php
     namespace App\Services;
-
+    
+    error_reporting(E_ALL & ~E_NOTICE);
     define('__ROOT__', dirname(dirname(__FILE__))); 
     use \App\Models\DAO\UsuarioDAO;
     require_once(__ROOT__.'/App/Models/DAO/UsuarioDAO.php'); 
@@ -40,8 +41,7 @@
                 $data = json_decode(file_get_contents("php://input"));
                 $data->{'senharesetexpire'} = $passresetexp;
                 $data->{'senharesettoken'} = $passresetToken;
-
-                return $userDAO->update($data);
+                return $userDAO->forgotPass($data);
             }
             $userDAO = new UsuarioDAO();
             $data = json_decode(file_get_contents("php://input"));
@@ -52,7 +52,7 @@
 
             $userDAO = new UsuarioDAO();
             $data = json_decode(file_get_contents("php://input"));
-
+            //var_dump($data);
             return $userDAO->resetSenha($data);
         }
 

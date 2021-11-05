@@ -6,11 +6,13 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
 use \App\Utils\Encrypt;
+use \App\Utils\Config;
 
+error_reporting(E_ALL & ~E_NOTICE);
 //Load Composer's autoloader
 define('__ROOT__', dirname(dirname(__FILE__)));
 include_once(__ROOT__.'/App/Utils/Encrypt.php'); 
-include_once(__ROOT__.'/config.php'); 
+include_once(__ROOT__.'/App/Utils/config.php'); 
 require (__ROOT__.'/vendor/autoload.php');
 
 
@@ -18,19 +20,21 @@ class Mail{
 
 public function sendEmail($email, $nome, $token){
 
-    $encrypt = new Encrypt();
+$encrypt = new Encrypt();
         //Create an instance; passing `true` enables exceptions
 $mail = new PHPMailer(true);
 
+$conf = new Config();
+
 try {
     //Server settings
-    $mail->SMTPDebug = SMTP::DEBUG_SERVER;                      //Enable verbose debug output
+    //$mail->SMTPDebug = SMTP::DEBUG_SERVER;                      //Enable verbose debug output
     $mail->isSMTP();                                            //Send using SMTP
-    $mail->Host       = base64url_decode($HOST);                     //Set the SMTP server to send through
+    $mail->Host       = $encrypt->base64url_decode($conf->getHost());      //Set the SMTP server to send through
     $mail->SMTPAuth   = true;                                   //Enable SMTP authentication
-    $mail->Username   = base64url_decode($USER);                      //SMTP username
-    $mail->Password   = base64url_decode($PASS);                              //SMTP password
-    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;            //Enable implicit TLS encryption
+    $mail->Username   = $encrypt->base64url_decode($conf->getUser());      //SMTP username
+    $mail->Password   = $encrypt->base64url_decode($conf->getPass());      //SMTP password
+    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;         //Enable implicit TLS encryption
     $mail->Port       = 587;                                    //TCP port to connect to; use 587 if you have set `SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS`
 
     //Recipients
@@ -55,7 +59,5 @@ try {
 } catch (Exception $e) {
     echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
 }
-    }
-    
 }
-
+}

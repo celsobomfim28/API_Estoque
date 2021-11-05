@@ -1,5 +1,5 @@
 <?php
-
+error_reporting(E_ALL & ~E_NOTICE);
     $url = 'http://localhost:80/APU/public_html/api';
 
     $class = '/user';

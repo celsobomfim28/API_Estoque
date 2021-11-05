@@ -1,6 +1,6 @@
 <?php
     namespace App\Models\DAO;
-
+    error_reporting(E_ALL & ~E_NOTICE);
     // required headers
     header("Access-Control-Allow-Origin: *");
     header("Content-Type: application/json; charset=UTF-8");
@@ -12,7 +12,9 @@
     // include database and object files
     include_once (__ROOT__.'/Database.php');
     require_once (__ROOT__.'/App/Models/Entity/Usuario.php');
+    include_once(__ROOT__.'/App/Utils/Encrypt.php');
 
+    use \App\Utils\Encrypt;
     use \Database;
     use \App\Models\Entity\Usuario;
     
@@ -101,6 +103,9 @@
             if($user){
                 throw new \Exception("Usuário já existe!");
             }
+
+            $encr = new Encrypt();
+            $newSenha = $encr->base64url_encode($data->{'senha'});
             
             $sql = 'INSERT INTO Usuario (nome, email, senha, cpf, endereco, bairo, num, cep, tel, 
             senharesettoken, senharesetexpire, sexo, datacriacao, Cidade_idCidade) 
@@ -108,7 +113,7 @@
             $stmt = $connPdo->prepare($sql);
             $stmt->bindValue(':na', $data->{'nome'});
             $stmt->bindValue(':em', $data->{'email'});
-            $stmt->bindValue(':se', $data->{'senha'});
+            $stmt->bindValue(':se', $newSenha);
             $stmt->bindValue(':cp', $data->{'cpf'});
             $stmt->bindValue(':en', $data->{'endereco'});
             $stmt->bindValue(':ba', $data->{'bairo'});
@@ -146,16 +151,56 @@
                 throw new \Exception("Usuário não existe!");
             }
 
-            if($user['senha'] != $senha){
+            $encr = new Encrypt();
+            $senhaPost = $encr->base64url_decode($user['senha']);
+
+            if($senhaPost !== $senha){
                 throw new \Exception("Senha inválida!");
             }
-
            
             if ($user) {
                 return $user;
             } else {
                 throw new \Exception("Nenhum usuário encontrado!");
             }
+        }
+
+        function forgotPass($data){
+
+             // instantiate database and product object
+             $database = new Database();
+             $db = $database->getConnection();
+         
+             // initialize object
+             $usuario = new Usuario($db);
+             $connPdo = $db;
+             
+             $user = $this->findOne($data->{'email'});
+ 
+             if(!$user){
+                 throw new \Exception("Usuário não existe!");
+             }
+
+             $id = (int) $user['idUsuario'];
+
+             $sql = 'UPDATE Usuario 
+             SET senharesettoken = :srt, senharesetexpire = :sre WHERE idUsuario = '.$id;
+
+             $stmt = $connPdo->prepare($sql);
+             $stmt->bindValue(':srt', $data->{'senharesettoken'});
+             $stmt->bindValue(':sre', $data->{'senharesetexpire'});
+
+             try{
+             
+                if ($stmt->execute()) {
+                    return $this->findOne($data->{'email'});
+                } else {
+                    $arr = $stmt->errorInfo();
+                    throw new \Exception("Falha ao atualizar usuário(a)!");
+                }
+             }catch(\Exception $e){
+                 var_dump($e);
+             }
         }
 
         function update($data){
@@ -174,7 +219,10 @@
             if(!$user){
                 throw new \Exception("Usuário não existe!");
             }
-            
+
+            $encr = new Encrypt();
+            $newSenha = $encr->base64url_encode($data->{'senha'});
+
             $sql = 'UPDATE Usuario 
             SET nome = :na, email = :em, senha = :se, cpf = :cp, 
             endereco = :en, bairo = :ba, num = :nu, cep = :ce, tel = :te, 
@@ -185,7 +233,7 @@
             $stmt = $connPdo->prepare($sql);
             $stmt->bindValue(':na', $data->{'nome'});
             $stmt->bindValue(':em', $data->{'email'});
-            $stmt->bindValue(':se', $data->{'senha'});
+            $stmt->bindValue(':se', $newSenha);
             $stmt->bindValue(':cp', $data->{'cpf'});
             $stmt->bindValue(':en', $data->{'endereco'});
             $stmt->bindValue(':ba', $data->{'bairo'});
@@ -222,8 +270,9 @@
             $connPdo = $db;
 
             $email = $data->{'email'};
-            $senharesettoken = $data->{'senharesettoken'};
-            $senha = $data->{'senha'};
+            $senharesettoken = $data->{'token'};
+            $encr = new Encrypt();
+            $senha = $encr->base64url_encode($data->{'password'});
  
             $user = $this->findOne($email);
  
@@ -237,7 +286,7 @@
 
             $now = new \DateTime();
             $dateExpire = strtotime($user['senharesetexpire']);
-            
+
             if($now > $dateExpire){
                 throw new \Exception("Token expirado! Gere outro!");
             }

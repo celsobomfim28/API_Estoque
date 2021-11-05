@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Utils;
-
+error_reporting(E_ALL & ~E_NOTICE);
 class Encrypt{
     function RandomToken($length = 32){
         if(!isset($length) || intval($length) <= 8 ){
